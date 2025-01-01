@@ -1,0 +1,6 @@
+
+def  chek(word):
+ ...   
+    
+
+    
