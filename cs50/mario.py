@@ -7,8 +7,11 @@ def main():
 
 def get_height():
     while True:
-        n = get_int("Height: ")
-        if n  > 0:
-            return n
-
+        try:
+            n = int(input("Height: "))
+            if n  > 0:
+                return n
+        except ValueError:
+            print("Not an interger")
+            print("hello")
 main()
