@@ -1,33 +1,52 @@
-from akinator.async_aki import Akinator
-import asyncio
+import akinator
 
-aki = Akinator()
-
-async def main():
+def play_akinator():
     print("Welcome to Akinator!")
-    await aki.start_game(language="en")
+    
+    # Initialize Akinator
+    aki = akinator.Akinator(language=akinator.Language.from_str('en'), theme=akinator.Theme.from_str('animals'), child_mode=False)
 
-    while aki.progression <= 80:
-        print(aki.question)
-        answer = input("Your answer (yes/no/idk/probably/probably not): ").lower()
+    # Start the game and get the first question
+    question = aki.start_game()
 
-        try:
-            if answer not in ['yes', 'no', 'idk', 'probably', 'probably not']:
-                print("Invalid answer. Please try again.")
-                continue
+    while aki.progression <= 80: # Or another threshold you prefer
+        print(f"Question: {question}")
+        answer = input("Your answer (yes/no/idk/probably/probably not/back): ").lower()
 
-            await aki.answer(answer)
-        except Exception as e:
-            print(f"Error: {e}")
-            break
+        if answer == "back":
+            try:
+                question = aki.back()
+            except akinator.CantGoBackAnyFurther:
+                print("Can't go back any further.")
+        else:
+            try:
+                question = aki.answer(answer)
+            except akinator.InvalidAnswerError: # Corrected exception name based on typical library patterns
+                print("Invalid answer. Please use 'yes', 'no', 'idk', 'probably', 'probably not', or 'back'.")
+            except Exception as e:
+                print(f"An unexpected error occurred: {e}")
+                break
+        
+        if aki.progression > 80 : # check after answering
+             break
 
-    await aki.win()
-    print(f"\nI guess: {aki.first_guess['name']} ({aki.first_guess['description']})")
-    print(f"Image: {aki.first_guess['absolute_picture_path']}")
-    correct = input("Was I correct? (yes/no): ").lower()
-    if correct == "yes":
-        print("Yay! I guessed it right 😎")
+
+    # Make a guess
+    guess = aki.win()
+
+    if guess:
+        print(f"\nI think your character is: {guess['name']}")
+        print(f"Description: {guess['description']}")
+        if guess['absolute_picture_path']:
+             print(f"Image: {guess['absolute_picture_path']}")
+        
+        correct_guess = input("Am I correct? (yes/no): ").lower()
+        if correct_guess == "yes":
+            print("Yay! I guessed it right.")
+        else:
+            print("Oops! I'll try to do better next time.")
     else:
-        print("Oh no! Maybe next time 😢")
+        print("I couldn't guess your character. You win!")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    play_akinator()
