@@ -1,2 +1,0 @@
-Chandan,nir,1000.0,500.0
-chandan,nir,1000.0,500.0
