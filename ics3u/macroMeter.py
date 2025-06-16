@@ -8,27 +8,35 @@ import os
 from datetime import datetime
 from openai import OpenAI
 from config import OPENROUTER_API_KEY
+from PIL import Image, ImageTk
+import platform
+import subprocess
+
+def validate_api_key(api_key):
+    """Validate the OpenRouter API key format"""
+    # Strip any whitespace from the API key
+    api_key = api_key.strip()
+    print(f"Validating API key: {api_key[:10]}...")  # Debug print first 10 chars
+    print(f"API key length: {len(api_key)}")  # Debug print length
+    
+    if not api_key:
+        return False, "API key is empty"
+    if not api_key.startswith("sk-or-v1-"):
+        return False, "API key should start with 'sk-or-v1-'"
+    if len(api_key) != 64:  # OpenRouter keys are exactly 64 characters including prefix
+        return False, f"API key length is incorrect (got {len(api_key)}, expected 64)"
+    return True, "API key format is valid"
 
 # Initialize OpenAI client with OpenRouter
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
+    api_key=OPENROUTER_API_KEY.strip(),  # Strip whitespace from API key
     default_headers={
-        "HTTP-Referer": "https://github.com/yourusername/macroMeter",  # Optional
-        "X-Title": "MacroMeter",  # Optional
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}"  # Add explicit Authorization header
+        "HTTP-Referer": "https://github.com/chandannir/python-macroMeter",
+        "X-Title": "MacroMeter",
+        "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}"  # Strip whitespace from API key
     }
 )
-
-def validate_api_key(api_key):
-    """Validate the OpenRouter API key format"""
-    if not api_key:
-        return False, "API key is empty"
-    if not api_key.startswith("Bearer "):
-        return False, "API key should start with 'Bearer '"
-    if len(api_key) < 35 or len(api_key) > 45:
-        return False, "API key length is incorrect"
-    return True, "API key format is valid"
 
 # Validate API key before configuring
 is_valid, message = validate_api_key(OPENROUTER_API_KEY)
@@ -38,12 +46,8 @@ if not is_valid:
 else:
     try:
         # Test the configuration
+        print("Testing API configuration...")  # Debug print
         response = client.chat.completions.create(
-            extra_headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "HTTP-Referer": "https://github.com/yourusername/macroMeter",
-                "X-Title": "MacroMeter"
-            },
             model="deepseek/deepseek-r1-0528:free",
             messages=[
                 {"role": "system", "content": "Test message"},
@@ -135,9 +139,32 @@ def show_start_screen():
     """Display the start screen with login and register buttons"""
     clear_window()
     
-    # Title
-    title_label = ctk.CTkLabel(current_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
-    title_label.pack(pady=50)
+    # Create a frame for the logo
+    logo_frame = ctk.CTkFrame(current_frame)
+    logo_frame.pack(pady=20)
+    
+    try:
+        # Load and resize the logo
+        logo_path = "assets/macroMeter.png"  # Make sure to create an 'assets' folder and add your logo
+        if os.path.exists(logo_path):
+            logo_image = Image.open(logo_path)
+            # Resize logo to a reasonable size (e.g., 200x200 pixels)
+            logo_image = logo_image.resize((200, 200), Image.Resampling.LANCZOS)
+            logo_photo = ctk.CTkImage(light_image=logo_image, dark_image=logo_image, size=(200, 200))
+            
+            # Create a label to display the logo
+            logo_label = ctk.CTkLabel(logo_frame, image=logo_photo, text="")
+            logo_label.pack(pady=10)
+    except Exception as e:
+        print(f"Error loading logo: {e}")
+        # If logo loading fails, show a text title instead
+        title_label = ctk.CTkLabel(logo_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
+        title_label.pack(pady=10)
+    
+    # Title (shown only if logo is not available)
+    if not os.path.exists("assets/logo.png"):
+        title_label = ctk.CTkLabel(current_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
+        title_label.pack(pady=20)
     
     # Login button
     login_btn = ctk.CTkButton(current_frame, text="Login", command=show_login_screen)
@@ -435,7 +462,7 @@ def show_sleep_screen():
     add_btn.pack(pady=5)
     
     # Relax button
-    relax_btn = ctk.CTkButton(current_frame, text="Relax", command=lambda: messagebox.showinfo("Coming Soon", "Relaxation feature will be implemented soon!"))
+    relax_btn = ctk.CTkButton(current_frame, text="Relax", command=show_relax_screen)
     relax_btn.pack(pady=5)
     
     # Add navigation bar
@@ -1090,30 +1117,106 @@ def show_settings():
     title_label = ctk.CTkLabel(current_frame, text="Settings", font=('Helvetica', 20, 'bold'))
     title_label.pack(pady=10)
     
-    # Settings options
-    settings_frame = ctk.CTkFrame(current_frame)
+    # Create scrollable frame for settings
+    settings_frame = ctk.CTkScrollableFrame(current_frame)
     settings_frame.pack(fill='both', expand=True, padx=20, pady=10)
     
+    # Basic Info Section
+    basic_info_frame = ctk.CTkFrame(settings_frame)
+    basic_info_frame.pack(fill='x', pady=10)
+    ctk.CTkLabel(basic_info_frame, text="Basic Information", font=('Helvetica', 16, 'bold')).pack(pady=5)
+    
+    # Get current user data
+    user_data = get_user_data(current_user, "basic_info")
+    if not user_data:
+        user_data = {}
+    
+    # Create form fields
+    fields = {
+        "age": ctk.CTkEntry(basic_info_frame, width=200),
+        "gender": ctk.CTkCombobox(basic_info_frame, values=["Male", "Female", "Other"], width=200),
+        "birthdate": ctk.CTkEntry(basic_info_frame, width=200),
+        "weight": ctk.CTkEntry(basic_info_frame, width=200),
+        "height": ctk.CTkEntry(basic_info_frame, width=200),
+        "sleep": ctk.CTkEntry(basic_info_frame, width=200),
+        "water": ctk.CTkEntry(basic_info_frame, width=200),
+        "activity": ctk.CTkCombobox(basic_info_frame, values=[
+            "No exercise",
+            "Light Exercise",
+            "Moderate Exercise",
+            "Active",
+            "Very Active",
+            "Extremely Active"
+        ], width=200)
+    }
+    
+    # Add labels and fields
+    for label, field in fields.items():
+        label_text = label.replace("_", " ").title() + ":"
+        ctk.CTkLabel(basic_info_frame, text=label_text).pack(pady=(5, 0))
+        field.pack(pady=(0, 5))
+        # Set current values if they exist
+        if label in user_data:
+            field.insert(0, str(user_data[label]))
+    
+    def save_basic_info():
+        try:
+            # Validate numeric fields
+            float(fields["age"].get())
+            float(fields["weight"].get())
+            float(fields["height"].get())
+            float(fields["sleep"].get())
+            float(fields["water"].get())
+            
+            # Validate date format
+            datetime.strptime(fields["birthdate"].get(), "%Y-%m-%d")
+            
+            # Save data
+            info = {
+                "age": fields["age"].get(),
+                "gender": fields["gender"].get(),
+                "birthdate": fields["birthdate"].get(),
+                "weight": fields["weight"].get(),
+                "height": fields["height"].get(),
+                "sleep": fields["sleep"].get(),
+                "water": fields["water"].get(),
+                "activity": fields["activity"].get()
+            }
+            
+            save_user_data(current_user, "basic_info", info)
+            messagebox.showinfo("Success", "Basic information updated successfully!")
+        except ValueError as e:
+            messagebox.showerror("Error", "Please enter valid numbers and date (YYYY-MM-DD)")
+    
+    # Save button for basic info
+    save_basic_btn = ctk.CTkButton(basic_info_frame, text="Save Basic Info", command=save_basic_info)
+    save_basic_btn.pack(pady=10)
+    
+    # Appearance Settings Section
+    appearance_frame = ctk.CTkFrame(settings_frame)
+    appearance_frame.pack(fill='x', pady=10)
+    ctk.CTkLabel(appearance_frame, text="Appearance", font=('Helvetica', 16, 'bold')).pack(pady=5)
+    
     # Theme selection
-    theme_label = ctk.CTkLabel(settings_frame, text="Appearance Mode:")
+    theme_label = ctk.CTkLabel(appearance_frame, text="Appearance Mode:")
     theme_label.pack(pady=(10, 5))
     
     def change_appearance_mode(new_mode):
         ctk.set_appearance_mode(new_mode)
     
-    theme_menu = ctk.CTkOptionMenu(settings_frame, values=["System", "Dark", "Light"],
+    theme_menu = ctk.CTkOptionMenu(appearance_frame, values=["System", "Dark", "Light"],
                                  command=change_appearance_mode)
     theme_menu.pack(pady=5)
     theme_menu.set(ctk.get_appearance_mode())
     
     # Color theme selection
-    color_label = ctk.CTkLabel(settings_frame, text="Color Theme:")
+    color_label = ctk.CTkLabel(appearance_frame, text="Color Theme:")
     color_label.pack(pady=(10, 5))
     
     def change_color_theme(new_theme):
         ctk.set_default_color_theme(new_theme)
     
-    color_menu = ctk.CTkOptionMenu(settings_frame, values=["blue", "green", "dark-blue"],
+    color_menu = ctk.CTkOptionMenu(appearance_frame, values=["blue", "green", "dark-blue"],
                                  command=change_color_theme)
     color_menu.pack(pady=5)
     color_menu.set("blue")
@@ -1121,13 +1224,13 @@ def show_settings():
     # Calorie goal setting
     calorie_frame = ctk.CTkFrame(settings_frame)
     calorie_frame.pack(fill='x', pady=10)
+    ctk.CTkLabel(calorie_frame, text="Nutrition Goals", font=('Helvetica', 16, 'bold')).pack(pady=5)
     
     ctk.CTkLabel(calorie_frame, text="Daily Calorie Goal:").pack(pady=5)
     calorie_entry = ctk.CTkEntry(calorie_frame)
     calorie_entry.pack(pady=5)
     
     # Load current calorie goal
-    user_data = get_user_data(current_user, "basic_info")
     if user_data and "calorie_goal" in user_data:
         calorie_entry.insert(0, str(user_data["calorie_goal"]))
     else:
@@ -1140,7 +1243,6 @@ def show_settings():
                 raise ValueError("Calorie goal must be positive")
             
             # Update user data
-            user_data = get_user_data(current_user, "basic_info")
             if not user_data:
                 user_data = {}
             user_data["calorie_goal"] = goal
@@ -1183,6 +1285,143 @@ def show_navigation_bar():
     for icon, command in buttons:
         btn = ctk.CTkButton(buttons_frame, text=icon, command=command, width=2)
         btn.pack(side='left', expand=True, padx=1)
+
+def play_sound(file_path):
+    """Play a sound file using platform-specific methods"""
+    try:
+        if platform.system() == "Darwin":  # macOS
+            subprocess.run(["afplay", file_path])
+        elif platform.system() == "Windows":
+            import winsound
+            winsound.PlaySound(file_path, winsound.SND_FILENAME)
+        else:  # Linux
+            subprocess.run(["aplay", file_path])
+    except Exception as e:
+        print(f"Error playing sound: {e}")
+
+def show_relax_screen():
+    """Display the relaxation screen with guided breathing exercise"""
+    clear_window()
+    
+    # Title
+    title_label = ctk.CTkLabel(current_frame, text="Guided Breathing", font=('Helvetica', 24, 'bold'))
+    title_label.pack(pady=20)
+    
+    # Create a frame for the breathing box
+    breathing_frame = ctk.CTkFrame(current_frame)
+    breathing_frame.pack(pady=20, padx=20, fill='both', expand=True)
+    
+    # Create the breathing box with highlighted borders
+    box_size = 200
+    breathing_box = ctk.CTkFrame(breathing_frame, width=box_size, height=box_size)
+    breathing_box.pack(pady=20)
+    
+    # Create border frames
+    border_width = 5
+    left_border = ctk.CTkFrame(breathing_box, width=border_width, height=box_size, fg_color="gray")
+    left_border.place(x=0, y=0)
+    
+    top_border = ctk.CTkFrame(breathing_box, width=box_size, height=border_width, fg_color="gray")
+    top_border.place(x=0, y=0)
+    
+    right_border = ctk.CTkFrame(breathing_box, width=border_width, height=box_size, fg_color="gray")
+    right_border.place(x=box_size-border_width, y=0)
+    
+    bottom_border = ctk.CTkFrame(breathing_box, width=box_size, height=border_width, fg_color="gray")
+    bottom_border.place(x=0, y=box_size-border_width)
+    
+    # Animation variables
+    breathing_active = False
+    borders = [left_border, top_border, right_border, bottom_border]
+    phases = ["Breathe In", "Hold", "Breathe Out", "Hold"]
+    current_phase = 0
+    animation_speed = 4000  # 4 seconds per phase
+    
+    # Breathing text
+    breathing_text = ctk.CTkLabel(breathing_frame, text="Press Start to Begin", font=('Helvetica', 16))
+    breathing_text.pack(pady=10)
+    
+    # Breathing instructions
+    instructions = ctk.CTkLabel(breathing_frame, 
+                              text="Follow the highlighted border and voice guidance.\nComplete one full cycle of breathing.",
+                              font=('Helvetica', 12))
+    instructions.pack(pady=10)
+    
+    def highlight_border(border, color="blue"):
+        """Highlight a border with the specified color"""
+        border.configure(fg_color=color)
+    
+    def reset_borders():
+        """Reset all borders to gray"""
+        for border in borders:
+            border.configure(fg_color="gray")
+    
+    def play_phase_audio(phase):
+        """Play audio for the current phase"""
+        audio_file = f"assets/breathing_{phase.lower().replace(' ', '_')}.wav"
+        if os.path.exists(audio_file):
+            play_sound(audio_file)
+    
+    def breathing_cycle():
+        """Run one complete breathing cycle"""
+        nonlocal current_phase, breathing_active
+        if not breathing_active:
+            return
+        
+        # Reset all borders
+        reset_borders()
+        
+        # Highlight current border and update text
+        highlight_border(borders[current_phase])
+        breathing_text.configure(text=phases[current_phase])
+        
+        # Play audio for current phase
+        play_phase_audio(phases[current_phase])
+        
+        # Move to next phase
+        current_phase = (current_phase + 1) % 4
+        
+        # Schedule next phase
+        if breathing_active:
+            root.after(animation_speed, breathing_cycle)
+    
+    def start_breathing():
+        """Start the breathing exercise"""
+        nonlocal breathing_active
+        breathing_active = True
+        start_stop_btn.configure(text="Stop")
+        # Wait 4 seconds before starting
+        breathing_text.configure(text="Starting in 4...")
+        root.after(4000, breathing_cycle)
+    
+    def stop_breathing():
+        """Stop the breathing exercise"""
+        nonlocal breathing_active
+        breathing_active = False
+        start_stop_btn.configure(text="Start")
+        reset_borders()
+        breathing_text.configure(text="Press Start to Begin")
+    
+    def toggle_breathing():
+        """Toggle the breathing exercise"""
+        if breathing_active:
+            stop_breathing()
+        else:
+            start_breathing()
+    
+    # Control buttons
+    controls_frame = ctk.CTkFrame(breathing_frame)
+    controls_frame.pack(pady=20)
+    
+    start_stop_btn = ctk.CTkButton(controls_frame, text="Start", command=toggle_breathing)
+    start_stop_btn.pack(side='left', padx=5)
+    
+    # Back button
+    back_btn = ctk.CTkButton(current_frame, text="Back", command=show_sleep_screen)
+    back_btn.pack(pady=20, padx=50, fill='x')
+    
+    # Add navigation bar
+    show_navigation_bar()
 
 def main():
     global root
