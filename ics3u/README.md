@@ -31,10 +31,17 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Create a `config.py` file in the project root and add your OpenRouter API key:
-```python
-OPENROUTER_API_KEY = "your-api-key-here"  # Get from https://openrouter.ai/keys
-```
+4. Set up OpenRouter API:
+   - Go to [OpenRouter](https://openrouter.ai/keys)
+   - Sign up for a free account
+   - Generate an API key
+   - Create a `config.py` file in the project root with your API key:
+   ```python
+   # OpenRouter API Configuration
+   # Get your API key from: https://openrouter.ai/keys
+   OPENROUTER_API_KEY = "sk-or-v1-your-api-key-here"  # Replace with your OpenRouter API key
+   ```
+   Note: The API key should start with "sk-or-v1-" and be exactly 64 characters long.
 
 ## Usage
 
@@ -52,11 +59,11 @@ python macroMeter.py
    - Activity level
 
 4. Use the navigation bar to access different features:
-   - 🏠 Overview: View your daily summary
-   - 💪 Workout: Track your exercises
-   - 🍎 Nutrition: Log your meals
-   - 😴 Sleep: Monitor your sleep
-   - 💬 AI Chat: Get personalized advice
+   - Overview: View your daily summary
+   - Workout: Track your exercises
+   - Nutrition: Log your meals
+   - Sleep: Monitor your sleep
+   - AI Chat: Get personalized advice
 
 5. Access settings to:
    - Update your basic information
@@ -69,10 +76,22 @@ python macroMeter.py
 - Python 3.8 or higher
 - Dependencies listed in `requirements.txt`
 
-## Contributing
+## Troubleshooting
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+If you encounter any issues:
 
-## License
+1. **API Authentication Error**:
+   - Ensure your OpenRouter API key is correctly formatted
+   - Check that the API key starts with "sk-or-v1-"
+   - Verify the API key is exactly 64 characters long
+   - Make sure there are no extra spaces in the config.py file
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+2. **Installation Issues**:
+   - Make sure you're using Python 3.8 or higher
+   - Try reinstalling the dependencies: `pip install -r requirements.txt --upgrade`
+   - Check if your virtual environment is activated
+
+3. **Application Errors**:
+   - Check the console output for error messages
+   - Ensure all required files are in the correct locations
+   - Verify that the users.json file has proper permissions

@@ -30,11 +30,11 @@ def validate_api_key(api_key):
 # Initialize OpenAI client with OpenRouter
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY.strip(),  # Strip whitespace from API key
+    api_key=OPENROUTER_API_KEY.strip(),
     default_headers={
         "HTTP-Referer": "https://github.com/chandannir/python-macroMeter",
         "X-Title": "MacroMeter",
-        "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}"  # Strip whitespace from API key
+        "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}"
     }
 )
 
