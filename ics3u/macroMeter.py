@@ -156,21 +156,40 @@ def hash_password(password):
 
 def save_user(username, password):
     # Save user credentials to JSON file
+    print(f"Attempting to save user: {username}")  # Debug print
+    
     users = {}
     if os.path.exists('users.json'):
-        with open('users.json', 'r') as f:
-            users = json.load(f)
+        try:
+            with open('users.json', 'r') as f:
+                users = json.load(f)
+            print(f"Loaded existing users: {list(users.keys())}")  # Debug print
+        except json.JSONDecodeError:
+            print("Error reading users.json, starting fresh")  # Debug print
+            users = {}
+    else:
+        print("users.json does not exist, creating new file")  # Debug print
+    
+    # Hash the password
+    hashed_password = hash_password(password)
+    print(f"Password hashed successfully")  # Debug print
     
     users[username] = {
-        "password": hash_password(password),
+        "password": hashed_password,
         "basic_info": {},
         "nutrition": [],
         "workouts": [],
         "sleep": []
     }
     
-    with open('users.json', 'w') as f:
-        json.dump(users, f)
+    try:
+        with open('users.json', 'w') as f:
+            json.dump(users, f, indent=2)
+        print(f"User {username} saved successfully!")  # Debug print
+        print(f"Total users: {list(users.keys())}")  # Debug print
+    except Exception as e:
+        print(f"Error saving user: {e}")  # Debug print
+        raise e
 
 def verify_user(username, password):
     # Verify user credentials
@@ -214,27 +233,48 @@ def show_start_screen():
     logo_frame = ctk.CTkFrame(current_frame)
     logo_frame.pack(pady=20)
     
-    try:
-        # Load and resize the logo
-        logo_path = "assets/MacroMeter.png"  # Fixed: correct filename with uppercase M
-        if os.path.exists(logo_path):
+    # Try to load the logo with a simpler approach
+    # Use the correct path relative to the script location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_path = os.path.join(script_dir, "assets", "MacroMeter.png")
+    logo_displayed = False
+    
+    # Debug: Print current working directory and file check
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Looking for logo at: {logo_path}")
+    print(f"File exists: {os.path.exists(logo_path)}")
+    print(f"Absolute path: {os.path.abspath(logo_path)}")
+    
+    if os.path.exists(logo_path):
+        try:
+            # Load image
             logo_image = Image.open(logo_path)
-            # Resize logo to a reasonable size (e.g., 200x200 pixels)
-            logo_image = logo_image.resize((200, 200), Image.Resampling.LANCZOS)
-            logo_photo = ctk.CTkImage(light_image=logo_image, dark_image=logo_image, size=(200, 200))
             
-            # Create a label to display the logo
+            # Convert to RGB if needed
+            if logo_image.mode != 'RGB':
+                logo_image = logo_image.convert('RGB')
+            
+            # Resize
+            logo_image = logo_image.resize((150, 150), Image.Resampling.LANCZOS)
+            
+            # Create CTkImage
+            logo_photo = ctk.CTkImage(light_image=logo_image, dark_image=logo_image, size=(150, 150))
+            
+            # Create and display logo
             logo_label = ctk.CTkLabel(logo_frame, image=logo_photo, text="")
             logo_label.pack(pady=10)
-        else:
-            # If logo file doesn't exist, show a text title instead
-            title_label = ctk.CTkLabel(logo_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
-            title_label.pack(pady=10)
-    except Exception as e:
-        print(f"Error loading logo: {e}")
-        # If logo loading fails, show a text title instead
+            logo_displayed = True
+            print("Logo displayed successfully!")
+            
+        except Exception as e:
+            print(f"Error loading logo: {e}")
+            logo_displayed = False
+    
+    # If logo failed to load, show text title
+    if not logo_displayed:
         title_label = ctk.CTkLabel(logo_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
         title_label.pack(pady=10)
+        print("Showing text title instead of logo")
     
     # Login button
     login_btn = ctk.CTkButton(current_frame, text="Login", command=show_login_screen)
@@ -320,15 +360,21 @@ def show_register_screen():
         password = password_entry.get()
         confirm = confirm_entry.get()
         
+        print(f"Register function called with username: {username}")  # Debug print
+        
         if not username or not password:
+            print("Registration failed: Empty fields")  # Debug print
             messagebox.showerror("Error", "Please fill all fields")
             return
         
         if password != confirm:
+            print("Registration failed: Passwords don't match")  # Debug print
             messagebox.showerror("Error", "Passwords do not match")
             return
         
+        print("Validation passed, calling save_user")  # Debug print
         save_user(username, password)
+        print("save_user completed, showing success message")  # Debug print
         messagebox.showinfo("Success", "Registration successful! Please login.")
         show_login_screen()
     
@@ -344,37 +390,53 @@ def show_basic_info_screen(username):
     clear_window()
     
     # Title
-    title_label = ctk.CTkLabel(current_frame, text="Basic Information", font=('Helvetica', 20, 'bold'))
-    title_label.pack(pady=10)
+    title_label = ctk.CTkLabel(current_frame, text="Basic Information", font=('Helvetica', 24, 'bold'))
+    title_label.pack(pady=20)
     
-    # Create main content frame
+    # Create main content frame with better spacing
     content_frame = ctk.CTkFrame(current_frame)
-    content_frame.pack(fill='both', expand=True, padx=20, pady=5)
+    content_frame.pack(fill='both', expand=True, padx=30, pady=10)
     
-    # Create form fields
+    # Create a scrollable frame for better organization
+    scrollable_frame = ctk.CTkScrollableFrame(content_frame)
+    scrollable_frame.pack(fill='both', expand=True, padx=20, pady=20)
+    
+    # Create form fields with better styling
     fields = {
-        "age": ctk.CTkEntry(content_frame, width=20),
-        "gender": ctk.CTkCombobox(content_frame, values=["Male", "Female", "Other"], width=18),
-        "birthdate": ctk.CTkEntry(content_frame, width=20),
-        "weight": ctk.CTkEntry(content_frame, width=20),
-        "height": ctk.CTkEntry(content_frame, width=20),
-        "sleep": ctk.CTkEntry(content_frame, width=20),
-        "water": ctk.CTkEntry(content_frame, width=20),
-        "activity": ctk.CTkCombobox(content_frame, values=[
+        "age": ctk.CTkEntry(scrollable_frame, placeholder_text="Enter your age", width=300, height=40),
+        "gender": ctk.CTkComboBox(scrollable_frame, values=["Male", "Female", "Other"], width=300, height=40),
+        "birthdate": ctk.CTkEntry(scrollable_frame, placeholder_text="YYYY-MM-DD", width=300, height=40),
+        "weight": ctk.CTkEntry(scrollable_frame, placeholder_text="Weight in kg", width=300, height=40),
+        "height": ctk.CTkEntry(scrollable_frame, placeholder_text="Height in cm", width=300, height=40),
+        "sleep": ctk.CTkEntry(scrollable_frame, placeholder_text="Target sleep hours", width=300, height=40),
+        "water": ctk.CTkEntry(scrollable_frame, placeholder_text="Daily water intake (L)", width=300, height=40),
+        "activity": ctk.CTkComboBox(scrollable_frame, values=[
             "No exercise",
             "Light Exercise",
             "Moderate Exercise",
             "Active",
             "Very Active",
             "Extremely Active"
-        ], width=18)
+        ], width=300, height=40)
     }
     
-    # Add labels and fields in vertical layout
-    for label, field in fields.items():
+    # Add labels and fields with better spacing
+    for i, (label, field) in enumerate(fields.items()):
+        # Create a frame for each field
+        field_frame = ctk.CTkFrame(scrollable_frame)
+        field_frame.pack(fill='x', pady=10, padx=10)
+        
+        # Label with better styling
         label_text = label.replace("_", " ").title() + ":"
-        ctk.CTkLabel(content_frame, text=label_text).pack(pady=(5, 0))
-        field.pack(pady=(0, 5))
+        label_widget = ctk.CTkLabel(field_frame, text=label_text, font=('Helvetica', 14, 'bold'))
+        label_widget.pack(pady=(10, 5), anchor='w')
+        
+        # Field with better styling
+        field.pack(pady=(0, 10), padx=20, fill='x')
+    
+    # Button frame with better styling
+    button_frame = ctk.CTkFrame(current_frame)
+    button_frame.pack(fill='x', pady=20, padx=30)
     
     def save_info():
         info = {
@@ -408,13 +470,10 @@ def show_basic_info_screen(username):
         except ValueError as e:
             messagebox.showerror("Error", str(e))
     
-    # Button frame
-    button_frame = ctk.CTkFrame(current_frame)
-    button_frame.pack(fill='x', pady=10, padx=20)
-    
-    # Save button
-    save_btn = ctk.CTkButton(button_frame, text="Save", command=save_info)
-    save_btn.pack(fill='x', pady=5)
+    # Save button with better styling
+    save_btn = ctk.CTkButton(button_frame, text="Save Information", command=save_info, 
+                            font=('Helvetica', 16, 'bold'), height=50)
+    save_btn.pack(fill='x', pady=10, padx=20)
 
 def show_main_menu():
     # Display the main menu with overview
