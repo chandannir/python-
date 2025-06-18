@@ -1,3 +1,73 @@
+"""
+MacroMeter - Health and Fitness Tracking Application
+Created by: Chandan Nir, Rohith Nair, and Alireza Nouhehkhan
+Date: 2024
+
+Description:
+MacroMeter is a comprehensive health and fitness tracking application that helps users monitor and improve their overall well-being.
+
+Key Features:
+1. User Management
+   - Secure login and registration system
+   - User profile management
+   - Settings customization
+
+2. Nutrition Tracking
+   - Daily meal logging
+   - Calorie tracking
+   - Macronutrient Tracking (protein, carbs, fats)
+   - Progress visualization
+
+3. Workout Management
+   - Weight training tracking
+   - Running/distance tracking
+   - Exercise history
+
+4. Sleep Monitoring
+   - Sleep duration tracking
+   - Sleep quality assessment
+   - Sleep history visualization
+   - Guided breathing exercises
+
+5. AI Assistant
+   - Personalized nutrition advice
+   - Workout recommendations
+   - Sleep improvement tips
+   - Real-time health insights
+
+6. Data Visualization
+   - Progress charts
+   - Performance graphs
+   - Trend analysis
+
+7. Settings and Customization
+   - Appearance themes (Light/Dark mode)
+   - Color scheme options
+   - Goal setting
+   - User preferences
+
+Technical Features:
+- Modern GUI using customtkinter
+- Data persistence using JSON
+- Secure password hashing
+- OpenRouter AI integration
+- Cross-platform compatibility
+- Responsive design
+- Error handling and validation
+
+Dependencies:
+- customtkinter
+- matplotlib
+- openai
+- PIL (Python Imaging Library)
+- datetime
+- json
+- hashlib
+- os
+- platform
+- subprocess
+"""
+
 import customtkinter as ctk
 from tkinter import messagebox
 import matplotlib.pyplot as plt
@@ -13,7 +83,7 @@ import platform
 import subprocess
 
 def validate_api_key(api_key):
-    """Validate the OpenRouter API key format"""
+    # Validate the OpenRouter API key format
     # Strip any whitespace from the API key
     api_key = api_key.strip()
     print(f"Validating API key: {api_key[:10]}...")  # Debug print first 10 chars
@@ -28,13 +98,14 @@ def validate_api_key(api_key):
     return True, "API key format is valid"
 
 # Initialize OpenAI client with OpenRouter
+api_key = OPENROUTER_API_KEY.strip()
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY.strip(),
+    api_key=api_key,
     default_headers={
         "HTTP-Referer": "https://github.com/chandannir/python-macroMeter",
         "X-Title": "MacroMeter",
-        "Authorization": f"Bearer {OPENROUTER_API_KEY.strip()}"
+        "Authorization": f"Bearer {api_key}"
     }
 )
 
@@ -68,7 +139,7 @@ ctk.set_appearance_mode("dark")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 def clear_window():
-    """Clear all widgets from the window"""
+    # Clear all widgets from the window
     global current_frame
     if current_frame:
         current_frame.destroy()
@@ -80,11 +151,11 @@ def clear_window():
         show_settings_button()
 
 def hash_password(password):
-    """Hash the password using SHA-256"""
+    # Hash the password using SHA-256
     return hashlib.sha256(password.encode()).hexdigest()
 
 def save_user(username, password):
-    """Save user credentials to JSON file"""
+    # Save user credentials to JSON file
     users = {}
     if os.path.exists('users.json'):
         with open('users.json', 'r') as f:
@@ -102,7 +173,7 @@ def save_user(username, password):
         json.dump(users, f)
 
 def verify_user(username, password):
-    """Verify user credentials"""
+    # Verify user credentials
     if not os.path.exists('users.json'):
         return False
     
@@ -112,7 +183,7 @@ def verify_user(username, password):
     return username in users and users[username]["password"] == hash_password(password)
 
 def save_user_data(username, data_type, data):
-    """Save user data to JSON file"""
+    # Save user data to JSON file
     with open('users.json', 'r') as f:
         users = json.load(f)
     
@@ -125,7 +196,7 @@ def save_user_data(username, data_type, data):
         json.dump(users, f)
 
 def get_user_data(username, data_type):
-    """Get user data from JSON file"""
+    # Get user data from JSON file
     with open('users.json', 'r') as f:
         users = json.load(f)
     
@@ -136,7 +207,7 @@ def get_user_data(username, data_type):
     return None
 
 def show_start_screen():
-    """Display the start screen with login and register buttons"""
+    # Display the start screen with login and register buttons
     clear_window()
     
     # Create a frame for the logo
@@ -175,7 +246,7 @@ def show_start_screen():
     register_btn.pack(pady=10, padx=50, fill='x')
 
 def show_login_screen():
-    """Display the login screen"""
+    # Display the login screen
     clear_window()
     
     # Title
@@ -219,7 +290,7 @@ def show_login_screen():
     back_btn.pack(pady=10, padx=50, fill='x')
 
 def show_register_screen():
-    """Display the registration screen"""
+    # Display the registration screen
     clear_window()
     
     # Title
@@ -270,7 +341,7 @@ def show_register_screen():
     back_btn.pack(pady=10, padx=50, fill='x')
 
 def show_basic_info_screen(username):
-    """Display the basic info collection screen"""
+    # Display the basic info collection screen
     clear_window()
     
     # Title
@@ -347,7 +418,7 @@ def show_basic_info_screen(username):
     save_btn.pack(fill='x', pady=5)
 
 def show_main_menu():
-    """Display the main menu with overview"""
+    # Display the main menu with overview
     clear_window()
     
     # Title
@@ -426,7 +497,7 @@ def show_main_menu():
     show_navigation_bar()
 
 def show_sleep_screen():
-    """Display the sleep screen"""
+    # Display the sleep screen
     clear_window()
     
     # Title
@@ -469,7 +540,7 @@ def show_sleep_screen():
     show_navigation_bar()
 
 def get_ai_response(message, user_data):
-    """Generate AI response using OpenRouter API with DeepSeek R1"""
+    # Generate AI response using OpenRouter API with DeepSeek R1
     try:
         # Prepare user data for context
         basic_info = user_data.get("basic_info", {})
@@ -493,6 +564,7 @@ def get_ai_response(message, user_data):
 Provide personalized advice based on this data. Keep responses concise and actionable."""
         
         print("Sending request to OpenRouter...")  # Debug print
+        print(f"API key format check: {api_key[:10]}...")  # Debug print first 10 chars
         
         # Make the API request
         completion = client.chat.completions.create(
@@ -511,13 +583,19 @@ Provide personalized advice based on this data. Keep responses concise and actio
         print(f"Error in AI chat: {error_message}")  # Debug print
         
         if "api_key" in error_message.lower():
-            return "I apologize, but there seems to be an issue with the API key. Please check your OpenRouter API key in config.py"
+            return "I'm having trouble connecting to my knowledge base. Please check your OpenRouter API key in config.py and make sure it starts with 'sk-or-v1-'."
         elif "quota" in error_message.lower():
-            return "I apologize, but I'm currently experiencing high traffic. Please try again in a few moments."
+            return "I'm currently experiencing high traffic. Please try again in a few moments."
         elif "permission" in error_message.lower():
-            return "I apologize, but there seems to be a permission issue with the API. Please check your API key permissions."
+            return "I don't have permission to access my knowledge base. Please check your OpenRouter API key permissions."
+        elif "401" in error_message:
+            return "I'm unable to authenticate with my knowledge base. Please check your OpenRouter API key in config.py and make sure it's correctly formatted."
+        elif "404" in error_message:
+            return "I'm having trouble finding the right information. Please try rephrasing your question."
+        elif "timeout" in error_message.lower():
+            return "I'm taking too long to respond. Please check your internet connection and try again."
         else:
-            return f"I apologize, but I'm having trouble connecting right now. Error: {error_message}"
+            return "I'm having trouble connecting right now. Please try again in a few moments. If the problem persists, check your internet connection and OpenRouter API key."
 
 def show_ai_chat():
     """Display the AI chat screen"""
@@ -564,11 +642,16 @@ def show_ai_chat():
             chat_history.see("end")
             
             # Get and display AI response
-            response = get_ai_response(message, user_data)
-            
-            # Remove loading message and add response
-            chat_history.delete("end-2c linestart", "end-1c lineend+1c")
-            chat_history.insert("end", f"AI: {response}\n")
+            try:
+                response = get_ai_response(message, user_data)
+                
+                # Remove loading message and add response
+                chat_history.delete("end-2c linestart", "end-1c lineend+1c")
+                chat_history.insert("end", f"AI: {response}\n")
+            except Exception as e:
+                # Remove loading message and add error
+                chat_history.delete("end-2c linestart", "end-1c lineend+1c")
+                chat_history.insert("end", "AI: I'm having trouble connecting right now. Please try again in a few moments.\n")
             
             # Scroll to bottom
             chat_history.see("end")
@@ -1134,13 +1217,13 @@ def show_settings():
     # Create form fields
     fields = {
         "age": ctk.CTkEntry(basic_info_frame, width=200),
-        "gender": ctk.CTkCombobox(basic_info_frame, values=["Male", "Female", "Other"], width=200),
+        "gender": ctk.CTkComboBox(basic_info_frame, values=["Male", "Female", "Other"], width=200),
         "birthdate": ctk.CTkEntry(basic_info_frame, width=200),
         "weight": ctk.CTkEntry(basic_info_frame, width=200),
         "height": ctk.CTkEntry(basic_info_frame, width=200),
         "sleep": ctk.CTkEntry(basic_info_frame, width=200),
         "water": ctk.CTkEntry(basic_info_frame, width=200),
-        "activity": ctk.CTkCombobox(basic_info_frame, values=[
+        "activity": ctk.CTkComboBox(basic_info_frame, values=[
             "No exercise",
             "Light Exercise",
             "Moderate Exercise",
@@ -1157,7 +1240,10 @@ def show_settings():
         field.pack(pady=(0, 5))
         # Set current values if they exist
         if label in user_data:
-            field.insert(0, str(user_data[label]))
+            if isinstance(field, ctk.CTkComboBox):
+                field.set(user_data[label])
+            else:
+                field.insert(0, str(user_data[label]))
     
     def save_basic_info():
         try:
@@ -1237,6 +1323,7 @@ def show_settings():
         calorie_entry.insert(0, "2000")  # Default value
     
     def save_calorie_goal():
+        nonlocal user_data
         try:
             goal = int(calorie_entry.get())
             if goal <= 0:
@@ -1336,10 +1423,15 @@ def show_relax_screen():
     phases = ["Breathe In", "Hold", "Breathe Out", "Hold"]
     current_phase = 0
     animation_speed = 4000  # 4 seconds per phase
+    countdown = 4  # Countdown for each phase
     
     # Breathing text
     breathing_text = ctk.CTkLabel(breathing_frame, text="Press Start to Begin", font=('Helvetica', 16))
     breathing_text.pack(pady=10)
+    
+    # Countdown text
+    countdown_text = ctk.CTkLabel(breathing_frame, text="", font=('Helvetica', 24, 'bold'))
+    countdown_text.pack(pady=5)
     
     # Breathing instructions
     instructions = ctk.CTkLabel(breathing_frame, 
@@ -1349,12 +1441,20 @@ def show_relax_screen():
     
     def highlight_border(border, color="blue"):
         """Highlight a border with the specified color"""
-        border.configure(fg_color=color)
+        try:
+            if border.winfo_exists():
+                border.configure(fg_color=color)
+        except:
+            pass
     
     def reset_borders():
         """Reset all borders to gray"""
         for border in borders:
-            border.configure(fg_color="gray")
+            try:
+                if border.winfo_exists():
+                    border.configure(fg_color="gray")
+            except:
+                pass
     
     def play_phase_audio(phase):
         """Play audio for the current phase"""
@@ -1362,45 +1462,76 @@ def show_relax_screen():
         if os.path.exists(audio_file):
             play_sound(audio_file)
     
+    def update_countdown():
+        """Update the countdown display"""
+        nonlocal countdown
+        try:
+            if countdown > 0 and countdown_text.winfo_exists():
+                countdown_text.configure(text=str(countdown))
+                countdown -= 1
+                root.after(1000, update_countdown)
+            elif countdown_text.winfo_exists():
+                countdown_text.configure(text="")
+        except:
+            pass
+    
     def breathing_cycle():
         """Run one complete breathing cycle"""
-        nonlocal current_phase, breathing_active
-        if not breathing_active:
-            return
-        
-        # Reset all borders
-        reset_borders()
-        
-        # Highlight current border and update text
-        highlight_border(borders[current_phase])
-        breathing_text.configure(text=phases[current_phase])
-        
-        # Play audio for current phase
-        play_phase_audio(phases[current_phase])
-        
-        # Move to next phase
-        current_phase = (current_phase + 1) % 4
-        
-        # Schedule next phase
-        if breathing_active:
-            root.after(animation_speed, breathing_cycle)
+        nonlocal current_phase, breathing_active, countdown
+        try:
+            if not breathing_active or not breathing_text.winfo_exists():
+                return
+            
+            # Reset all borders
+            reset_borders()
+            
+            # Highlight current border and update text
+            highlight_border(borders[current_phase])
+            breathing_text.configure(text=phases[current_phase])
+            
+            # Play audio for current phase
+            play_phase_audio(phases[current_phase])
+            
+            # Start countdown
+            countdown = 4
+            update_countdown()
+            
+            # Move to next phase
+            current_phase = (current_phase + 1) % 4
+            
+            # Schedule next phase
+            if breathing_active and breathing_text.winfo_exists():
+                root.after(animation_speed, breathing_cycle)
+        except:
+            pass
     
     def start_breathing():
         """Start the breathing exercise"""
         nonlocal breathing_active
-        breathing_active = True
-        start_stop_btn.configure(text="Stop")
-        # Wait 4 seconds before starting
-        breathing_text.configure(text="Starting in 4...")
-        root.after(4000, breathing_cycle)
+        try:
+            breathing_active = True
+            start_stop_btn.configure(text="Stop")
+            # Wait 4 seconds before starting
+            breathing_text.configure(text="Starting in 4...")
+            countdown = 4
+            update_countdown()
+            root.after(4000, breathing_cycle)
+        except:
+            pass
     
     def stop_breathing():
         """Stop the breathing exercise"""
         nonlocal breathing_active
-        breathing_active = False
-        start_stop_btn.configure(text="Start")
-        reset_borders()
-        breathing_text.configure(text="Press Start to Begin")
+        try:
+            breathing_active = False
+            start_stop_btn.configure(text="Start")
+            reset_borders()
+            if breathing_text.winfo_exists():
+                breathing_text.configure(text="Press Start to Begin")
+            if countdown_text.winfo_exists():
+                countdown_text.configure(text="")
+        except:
+            pass
     
     def toggle_breathing():
         """Toggle the breathing exercise"""

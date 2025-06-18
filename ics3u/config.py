@@ -1,3 +1,3 @@
 # OpenRouter API Configuration
 # Get your API key from: https://openrouter.ai/keys
-OPENROUTER_API_KEY = "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"  # Replace with your OpenRouter API key  
+OPENROUTER_API_KEY = "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"  # Replace with your OpenRouter API key  
