@@ -216,7 +216,7 @@ def show_start_screen():
     
     try:
         # Load and resize the logo
-        logo_path = "assets/macroMeter.png"  # Make sure to create an 'assets' folder and add your logo
+        logo_path = "assets/MacroMeter.png"  # Fixed: correct filename with uppercase M
         if os.path.exists(logo_path):
             logo_image = Image.open(logo_path)
             # Resize logo to a reasonable size (e.g., 200x200 pixels)
@@ -226,16 +226,15 @@ def show_start_screen():
             # Create a label to display the logo
             logo_label = ctk.CTkLabel(logo_frame, image=logo_photo, text="")
             logo_label.pack(pady=10)
+        else:
+            # If logo file doesn't exist, show a text title instead
+            title_label = ctk.CTkLabel(logo_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
+            title_label.pack(pady=10)
     except Exception as e:
         print(f"Error loading logo: {e}")
         # If logo loading fails, show a text title instead
         title_label = ctk.CTkLabel(logo_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
         title_label.pack(pady=10)
-    
-    # Title (shown only if logo is not available)
-    if not os.path.exists("assets/logo.png"):
-        title_label = ctk.CTkLabel(current_frame, text="MacroMeter", font=('Helvetica', 24, 'bold'))
-        title_label.pack(pady=20)
     
     # Login button
     login_btn = ctk.CTkButton(current_frame, text="Login", command=show_login_screen)
