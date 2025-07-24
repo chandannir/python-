@@ -14,7 +14,7 @@ class Flight():
 
 flight = Flight(3)
 
-people = ["Chandan", "ryan", "Akshat", "Jacob", "Adam Elluchuo"]
+people = ["Chandan Nir", "Ryan Mah", "Akshat Patole", "Jacob Soden", "Adam Elluchuo"]
 for person in people:
     success = flight.add_passenger(person)
     if success:
