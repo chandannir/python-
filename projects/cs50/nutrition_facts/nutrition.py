@@ -8,3 +8,4 @@ items = {
 fruit = input("Item: ").lower().strip()
 
 print(f"Calories: {items[fruit]}")
+print("hellpo")
