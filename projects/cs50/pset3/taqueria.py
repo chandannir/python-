@@ -14,3 +14,4 @@ items = {
 item = input("Item: ").title()
 
 print(f"Total: ${items[item]}")
+print()
