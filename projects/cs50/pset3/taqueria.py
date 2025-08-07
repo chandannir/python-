@@ -1,3 +1,5 @@
+total = 0.0
+
 items = {
     "Baja Taco": 4.25,
     "Burrito": 7.50,
@@ -10,7 +12,13 @@ items = {
     "Tortilla Salad": 8.00
 }
 
-
-item = input("Item: ").title()
-
-print(f"Total: ${items[item]}")
+while True:
+    try:
+        item = input("Item: ").title()
+        total =+ items[item]
+        print(f"Total: ${items[item]:.2f}")
+    except KeyError:
+        continue
+    except EOFError:
+        print("\n")
+        break

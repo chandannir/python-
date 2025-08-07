@@ -10,10 +10,13 @@ def fuel_gauge():
                 continue
             
             fuel_amount = (numerator / denominator) * 100
-            if fuel_amount <= 1:
-                print("E")
+            
+            if fuel_amount < 0:
+                raise ValueError
             elif fuel_amount >= 99:
                 print("F") 
+            elif fuel_amount <=1:
+                print("E")
             else:
                 print(f"{round(fuel_amount)}")
         
