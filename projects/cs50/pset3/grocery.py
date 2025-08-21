@@ -12,4 +12,5 @@ while True:
     except EOFError:
         for i, groceries in items.items():
             print(i, groceries)
-        break
+        
+        
